@@ -34,8 +34,6 @@ function MainHeader() {
                         <Button variant={"contained"} color={"primary"}>회원가입</Button>
                     </Link>
                 </View>
-                {/* 로그인 버튼 */}
-                {/* 회원가입 */}
             </View>
         </View>
     );
