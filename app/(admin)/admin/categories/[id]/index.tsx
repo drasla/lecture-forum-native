@@ -1,33 +1,65 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AdminCategoryInputType, AdminCategorySchema } from "@/schemas/admin/adminCategorySchema";
-import { View } from "react-native";
+import adminCategoryApi from "@/api/admin/adminCategoryApi";
+import { isAxiosError } from "axios";
+import { Alert, Platform, View } from "react-native";
 import { twMerge } from "tailwind-merge";
 import Title from "@/components/common/title/Title";
 import Card from "@/components/common/card/Card";
 import InputGroup from "@/components/common/input/InputGroup";
 import ErrorMessage from "@/components/common/form/ErrorMessage";
 import Button from "@/components/common/button/Button";
-import adminCategoryApi from "@/api/admin/adminCategoryApi";
-import { isAxiosError } from "axios";
+import { useEffect, useState } from "react";
+import LoadingIndicator from "@/components/common/loading/LoadingIndicator";
 
-function AdminCategoryCreatePage() {
+function AdminCategoryUpdatePage() {
+    // expo가 동적라우팅으로 된 주소에 값을 id라고 하는 변수로 전달해줄 것임
+    // React에서 동적라우팅으로 전달된 값을 꺼내는 hook은 useParams
+    // Expo에서 동적라우팅으로 전달된 값을 꺼내는 hook은 useLocalSearchParams
+    const { id } = useLocalSearchParams<{ id: string }>();
+    const categoryId = Number(id);
+
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
 
     const {
         control,
         handleSubmit,
         setError,
+        reset,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(AdminCategorySchema),
         mode: "onTouched",
     });
 
+    useEffect(() => {
+        const loadCategory = async () => {
+            try {
+                const result = await adminCategoryApi.getCategoryById(categoryId);
+                reset({ name: result.name });
+            } catch (error) {
+                console.log(error);
+                if (Platform.OS === "web") {
+                    alert("카테고리 정보를 불러오는데 실패했습니다.");
+                    router.back();
+                } else {
+                    Alert.alert("오류", "카테고리 정보를 불러오는데 실패했습니다.");
+                    router.back();
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadCategory().then(() => {});
+    }, [categoryId, reset, router]);
+
     const onSubmit = async (data: AdminCategoryInputType) => {
         try {
-            await adminCategoryApi.createCategory(data);
+            await adminCategoryApi.updateCategory(categoryId, data);
             router.push("/admin/categories");
         } catch (error) {
             console.log(error);
@@ -39,13 +71,20 @@ function AdminCategoryCreatePage() {
                 }
             }
 
-            setError("root", { message: "카테고리 생성 중 알 수 없는 오류가 발생되었습니다." });
+            setError("root", { message: "카테고리 수정 중 알 수 없는 오류가 발생되었습니다." });
         }
     };
 
+    if (isLoading) {
+        return <LoadingIndicator fullScreen={true} />;
+    }
+
     return (
         <View className={twMerge("flex-1", "w-full")}>
-            <Title title={"카테고리 생성"} description={"새로운 토론장 카테고리를 추가합니다."} />
+            <Title
+                title={"카테고리 수정"}
+                description={"기존 토론장 카테고리의 이름을 수정합니다."}
+            />
 
             <Card>
                 <Controller
@@ -85,7 +124,7 @@ function AdminCategoryCreatePage() {
                         color={"primary"}
                         onPress={handleSubmit(onSubmit)}
                         disabled={isSubmitting}>
-                        {isSubmitting ? "생성 중..." : "생성하기"}
+                        {isSubmitting ? "수정 중..." : "수정하기"}
                     </Button>
                 </View>
             </Card>
@@ -93,4 +132,4 @@ function AdminCategoryCreatePage() {
     );
 }
 
-export default AdminCategoryCreatePage;
+export default AdminCategoryUpdatePage;
