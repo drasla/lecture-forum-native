@@ -10,6 +10,7 @@ import Card from "@/components/common/card/Card";
 import TextComponent from "@/components/common/text/TextComponent";
 import Badge from "@/components/common/badge/Badge";
 import { Feather } from "@expo/vector-icons";
+import Pagination from "@/components/common/pagination/Pagination";
 
 function AdminUserListPage() {
     const [list, setList] = useState<User[]>([]);
@@ -46,6 +47,8 @@ function AdminUserListPage() {
         loadUsers(currentPage, pageSize).then(() => {});
     }, [currentPage, pageSize]);
 
+    const totalPage = Math.ceil(total / pageSize) || 1;
+
     const handleDeleteUser = async (id: number) => {
         const executeDelete = async () => {
             try {
@@ -59,7 +62,7 @@ function AdminUserListPage() {
                     Alert.alert("오류", "유저 삭제에 실패했습니다.");
                 }
             }
-        }
+        };
 
         if (Platform.OS === "web") {
             if (confirm("정말 이 유저를 삭제 처리 하시겠습니까?")) {
@@ -67,11 +70,11 @@ function AdminUserListPage() {
             }
         } else {
             Alert.alert("경고", "정말 이 유저를 삭제 처리 하시겠습니까?", [
-                { text: "취소", style: "cancel"},
-                { text: "삭제", style: "destructive", onPress: executeDelete }
+                { text: "취소", style: "cancel" },
+                { text: "삭제", style: "destructive", onPress: executeDelete },
             ]);
         }
-    }
+    };
 
     return (
         <View className={twMerge("flex-1", "w-full")}>
@@ -143,9 +146,10 @@ function AdminUserListPage() {
                             className={twMerge(
                                 ["flex-row", "items-center", "px-4", "py-3", "transition-all"],
                                 ["border-b", "border-divider"],
-                                index === list.length - 1 && ["rounded-b-xl", "border-b-0"]
+                                index === list.length - 1 && ["rounded-b-xl", "border-b-0"],
                             )}>
-                            <TextComponent className={twMerge(["hidden", "md:flex", "w-12"], ["text-center"])}>
+                            <TextComponent
+                                className={twMerge(["hidden", "md:flex", "w-12"], ["text-center"])}>
                                 {item.id}
                             </TextComponent>
                             <View className={twMerge(["flex-1"], ["px-2"])}>
@@ -165,11 +169,7 @@ function AdminUserListPage() {
                                     {item.name} ({item.nickname})
                                 </TextComponent>
                             </View>
-                            <TextComponent
-                                className={twMerge(
-                                    ["w-16"],
-                                    ["text-center"],
-                                )}>
+                            <TextComponent className={twMerge(["w-16"], ["text-center"])}>
                                 <Badge
                                     color={item.role === "ADMIN" ? "info" : "secondary"}
                                     size={"small"}>
@@ -188,17 +188,49 @@ function AdminUserListPage() {
                                     ["w-20"],
                                     ["font-bold", "text-text-secondary", "text-center"],
                                 )}>
-                                <Pressable className={"p-1.5"} disabled={!!item.deletedAt} onPress={() => router.push(`/admin/users/${item.id}`)}>
-                                    <Feather name={"edit-2"} size={16} className={item.deletedAt ? "text-text-secondary" : "text-text-secondary hover:text-primary-main"} />
+                                <Pressable
+                                    className={"p-1.5"}
+                                    disabled={!!item.deletedAt}
+                                    onPress={() => router.push(`/admin/users/${item.id}`)}>
+                                    <Feather
+                                        name={"edit-2"}
+                                        size={16}
+                                        className={
+                                            item.deletedAt
+                                                ? "text-text-secondary"
+                                                : "text-text-secondary hover:text-primary-main"
+                                        }
+                                    />
                                 </Pressable>
-                                <Pressable className={"p-1.5"} disabled={!!item.deletedAt} onPress={() => handleDeleteUser(item.id)}>
-                                    <Feather name={"trash-2"} size={16} className={item.deletedAt ? "text-text-secondary" : "text-error-main"} />
+                                <Pressable
+                                    className={"p-1.5"}
+                                    disabled={!!item.deletedAt}
+                                    onPress={() => handleDeleteUser(item.id)}>
+                                    <Feather
+                                        name={"trash-2"}
+                                        size={16}
+                                        className={
+                                            item.deletedAt
+                                                ? "text-text-secondary"
+                                                : "text-error-main"
+                                        }
+                                    />
                                 </Pressable>
                             </TextComponent>
                         </View>
                     ))}
                 </ScrollView>
             </Card>
+            <Pagination
+                currentPage={currentPage}
+                totalPage={totalPage}
+                onPageChange={newPage =>
+                    router.setParams({ page: String(newPage), size: String(pageSize) })
+                }
+                size={"medium"}
+                color={"primary"}
+                shape={"rounded"}
+            />
         </View>
     );
 }
