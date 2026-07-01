@@ -187,7 +187,7 @@ function MainHeaderDesktop({ list }: Props) {
                                                                 "hover:text-error-contrast",
                                                             ],
                                                         )}>
-                                                        라벨라벨
+                                                        {item.label}
                                                     </TextComponent>
                                                 </Pressable>
                                             </View>
